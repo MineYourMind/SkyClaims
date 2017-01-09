@@ -37,12 +37,12 @@ public class Database {
 			String table = String.format("CREATE TABLE IF NOT EXISTS %s (" +
 					"ownerUUID	STRING PRIMARY KEY," +
 					"claimUUID	STRING," +
-					"worldUUID	STRING" +
-					"regionX	STRING," +
-					"regionZ    STRING," +
-					"spawnX			INT," +
-					"spawnY			INT," +
-					"spawnZ			INT" +
+					"worldUUID	STRING," +
+					"regionX	INT," +
+					"regionZ    INT," +
+					"spawnX		INT," +
+					"spawnY		INT," +
+					"spawnZ		INT" +
 					")", islandTableName);
 
 			// Create the islands table (execute statement)
