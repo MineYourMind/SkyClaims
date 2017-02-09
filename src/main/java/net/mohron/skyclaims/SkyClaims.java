@@ -2,6 +2,7 @@ package net.mohron.skyclaims;
 
 import com.google.inject.Inject;
 import me.ryanhamshire.griefprevention.GriefPrevention;
+import me.ryanhamshire.griefprevention.api.GriefPreventionApi;
 import net.mohron.skyclaims.command.*;
 import net.mohron.skyclaims.config.ConfigManager;
 import net.mohron.skyclaims.config.type.GlobalConfig;
@@ -39,7 +40,7 @@ import static net.mohron.skyclaims.PluginInfo.*;
 		})
 public class SkyClaims {
 	private static SkyClaims instance;
-	private static GriefPrevention griefPrevention;
+	private static GriefPreventionApi griefPrevention;
 	private static PermissionService permissionService;
 
 	@Inject
@@ -88,7 +89,7 @@ public class SkyClaims {
 		// GriefPrevention integration
 		try {
 			Class.forName("me.ryanhamshire.griefprevention.GriefPrevention");
-			SkyClaims.griefPrevention = GriefPrevention.instance;
+			SkyClaims.griefPrevention = GriefPrevention.getApi();
 			getLogger().info("GriefPrevention Integration Successful!");
 		} catch (ClassNotFoundException e) {
 			getLogger().info("GriefPrevention Integration Failed!");
@@ -99,6 +100,7 @@ public class SkyClaims {
 		pluginConfigManager.save();
 
 		Sponge.getGame().getEventManager().registerListeners(this, new SchematicHandler());
+		Sponge.getGame().getEventManager().registerListeners(this, new ClaimEventHandler());
 
 		registerCommands();
 	}
@@ -138,7 +140,7 @@ public class SkyClaims {
 		return instance;
 	}
 
-	public GriefPrevention getGriefPrevention() {
+	public GriefPreventionApi getGriefPrevention() {
 		return griefPrevention;
 	}
 

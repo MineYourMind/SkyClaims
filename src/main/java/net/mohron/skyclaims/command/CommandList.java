@@ -51,7 +51,7 @@ public class CommandList implements CommandExecutor {
 					TextColors.LIGHT_PURPLE, island.getRegion().getX(), TextColors.GRAY, ", ",
 					TextColors.LIGHT_PURPLE, island.getRegion().getZ(), TextColors.GRAY, ") - ",
 					TextColors.GREEN, Text.builder(island.getClaimId() == null ? "Broken-Claim-Relation" : island.getClaimId().toString()).
-							onClick(TextActions.executeCallback(CommandUtil.createCommandConsumer(src, "claiminfo", island.getClaim() == null ? "Broken-Claim-Relation" : island.getClaim().getID().toString(), CommandUtil.createReturnIslandInfoConsumer(src, ""))))
+							onClick(TextActions.executeCallback(CommandUtil.createCommandConsumer(src, "claiminfo", island.getClaim() == null ? "Broken-Claim-Relation" : island.getClaim().getUniqueId().toString(), CommandUtil.createReturnIslandInfoConsumer(src, ""))))
 							.onHover(TextActions.showText(Text.of("Click here to check claim info.")))
 			));
 			newline = true;

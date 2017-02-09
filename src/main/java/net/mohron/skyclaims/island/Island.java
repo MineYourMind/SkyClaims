@@ -1,13 +1,16 @@
 package net.mohron.skyclaims.island;
 
 import com.flowpowered.math.vector.Vector3i;
-import me.ryanhamshire.griefprevention.DataStore;
-import me.ryanhamshire.griefprevention.claim.Claim;
+import me.ryanhamshire.griefprevention.api.claim.Claim;
+import me.ryanhamshire.griefprevention.api.claim.ClaimManager;
+import me.ryanhamshire.griefprevention.api.claim.ClaimResult;
+import me.ryanhamshire.griefprevention.api.claim.TrustType;
 import net.mohron.skyclaims.IslandStore;
 import net.mohron.skyclaims.Region;
 import net.mohron.skyclaims.SkyClaims;
 import net.mohron.skyclaims.config.type.GlobalConfig;
 import net.mohron.skyclaims.util.ConfigUtil;
+import net.mohron.skyclaims.util.IslandUtil;
 import net.mohron.skyclaims.util.WorldUtil;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
@@ -16,13 +19,15 @@ import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
 public class Island {
 	private static final SkyClaims PLUGIN = SkyClaims.getInstance();
 	private static GlobalConfig config = PLUGIN.getConfig();
-	private static final DataStore claimSystem = PLUGIN.getGriefPrevention().dataStore;
+	private static final World WORLD = ConfigUtil.getWorld();
+	private static final ClaimManager CLAIM_MANAGER = PLUGIN.getGriefPrevention().getClaimManager(WORLD);
 
 	private UUID owner;
 	private Claim claim;
@@ -48,12 +53,14 @@ public class Island {
 		this.region = region;
 		this.spawn = new Location<>(world, spawnLocation);
 
-		this.claim = claimSystem.getClaim(world.getProperties(), claimId);
+		this.claim = CLAIM_MANAGER.getClaimByUUID(claimId).orElse(null);
 
 		if (this.claim == null) {
-			SkyClaims.getInstance().getLogger().error("Claim " + claimId + " not found.");
-			// todo create new claim
-			// Protection creation requires Player Object
+			SkyClaims.getInstance().getLogger().error("Claim " + claimId + " not found. Force claiming the island.");
+			ClaimResult result = IslandUtil.forceCreateProtection(getUser().orElse(null).getName(), owner, region);
+			if (result.successful()) {
+				this.claim = result.getClaim().get();
+			}
 		}
 	}
 
@@ -88,11 +95,11 @@ public class Island {
 
 
 	public UUID getClaimId() {
-        return claim == null ? null : claim.getID();
+        return claim == null ? null : claim.getUniqueId();
     }
 
-	public String getDateCreated() {
-		return claim.getClaimData().getDateCreated();
+	public Instant getDateCreated() {
+		return claim.getData().getDateCreated();
 	}
 
 	public World getWorld() {
@@ -126,9 +133,9 @@ public class Island {
 
 	public boolean hasPermissions(Player player) {
 		return claim != null && (player.getUniqueId().equals(claim.getOwnerUniqueId()) ||
-				claim.getClaimData().getContainers().contains(player.getUniqueId()) ||
-				claim.getClaimData().getBuilders().contains(player.getUniqueId()) ||
-				claim.getClaimData().getManagers().contains(player.getUniqueId()));
+				claim.getTrusts(TrustType.CONTAINER).contains(player.getUniqueId()) ||
+				claim.getTrusts(TrustType.BUILDER).contains(player.getUniqueId()) ||
+				claim.getTrusts(TrustType.MANAGER).contains(player.getUniqueId()));
 	}
 
 	public Region getRegion() {
