@@ -99,9 +99,6 @@ public class SkyClaims {
 		pluginConfigManager = new ConfigManager(configManager);
 		pluginConfigManager.save();
 
-		Sponge.getGame().getEventManager().registerListeners(this, new SchematicHandler());
-		Sponge.getGame().getEventManager().registerListeners(this, new ClaimEventHandler());
-
 		registerCommands();
 	}
 
@@ -110,6 +107,10 @@ public class SkyClaims {
 		database = new Database(getConfigDir() + File.separator + "skyclaims.db");
 			IslandStore.overwriteIslands(database.loadData());
 		getLogger().info("ISLAND LENGTH: " + IslandStore.getIslands().size());
+
+		getLogger().info("Registering Event Listeners");
+		Sponge.getGame().getEventManager().registerListeners(this, new SchematicHandler());
+		Sponge.getGame().getEventManager().registerListeners(this, new ClaimEventHandler());
 		getLogger().info("Initialization complete.");
 	}
 
