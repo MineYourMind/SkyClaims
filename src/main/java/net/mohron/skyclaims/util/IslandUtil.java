@@ -1,10 +1,7 @@
 package net.mohron.skyclaims.util;
 
 import com.flowpowered.math.vector.Vector3i;
-import me.ryanhamshire.griefprevention.api.claim.Claim;
-import me.ryanhamshire.griefprevention.api.claim.ClaimManager;
-import me.ryanhamshire.griefprevention.api.claim.ClaimResult;
-import me.ryanhamshire.griefprevention.api.claim.ClaimType;
+import me.ryanhamshire.griefprevention.api.claim.*;
 import net.mohron.skyclaims.IslandStore;
 import net.mohron.skyclaims.Region;
 import net.mohron.skyclaims.SkyClaims;
@@ -40,9 +37,7 @@ public class IslandUtil {
 			//noinspection OptionalGetWithoutIsPresent
 			PLUGIN.getLogger().error("Failed to create claim. Found overlapping claim: " + claimResult.getClaim().get().getUniqueId());
 			return Optional.empty();
-		} else if (claimResult.getClaim().isPresent()) {
-		    CLAIM_MANAGER.addClaim(claimResult.getClaim().get(), Cause.source(PLUGIN).build());
-        }
+		}
 
 		ConfigUtil.getCreateCommands().ifPresent(commands -> {
 			for (String command : commands) {
@@ -58,11 +53,21 @@ public class IslandUtil {
 		ClaimResult claimResult = null;
 		while (claimResult == null || !claimResult.successful()) {
 			claimResult = createProtection(ownerName, ownerUUID, region);
-			if (!claimResult.successful()) {
-				PLUGIN.getLogger().error("Failed to create claim. Found overlapping claim: " + claimResult.getClaim() + " removing overlapping claims.");
+			if (claimResult.getResultType().equals(ClaimResultType.OVERLAPPING_CLAIM)) {
+				PLUGIN.getLogger().error("Failed to create claim. Found overlapping claims. Removing them:");
 				for (Claim claim : claimResult.getClaims()) {
+					PLUGIN.getLogger().error(String.format(
+							"Removing overlapping claim %s with region %s,%s: (%s,%s),(%s,%s)",
+							claim.getUniqueId(),
+							claim.getData().getLesserBoundaryCornerPos().getX() >> 5 >> 4, claim.getData().getLesserBoundaryCornerPos().getZ() >> 5 >> 4,
+							claim.getData().getLesserBoundaryCornerPos().getX(), claim.getData().getGreaterBoundaryCornerPos().getX(),
+							claim.getData().getLesserBoundaryCornerPos().getZ(), claim.getData().getGreaterBoundaryCornerPos().getZ()
+					));
                     CLAIM_MANAGER.deleteClaim(claim, Cause.source(PLUGIN).build());
                 }
+			} else if (claimResult.getClaim().isPresent()) {
+				CLAIM_MANAGER.addClaim(claimResult.getClaim().get(), Cause.source(PLUGIN).build());
+				PLUGIN.getLogger().info("Successfully created new claim " + claimResult.getClaim().get().getUniqueId() + ".");
 			}
 		}
 		return claimResult;
@@ -109,14 +114,15 @@ public class IslandUtil {
 
 	private static ClaimResult createProtection(String ownerName, UUID ownerUUID, Region region) {
 		PLUGIN.getLogger().info(String.format(
-				"Creating claim for %s with region %s,%s: (%s,%s),(%s,%s)",
+				"Creating claim for %s (%s) with region %s,%s: (%s,%s),(%s,%s)",
 				ownerName,
+				ownerUUID,
 				region.getX(), region.getZ(),
-				region.getLesserBoundary().getX(), region.getGreaterBoundary().getX(),
-				region.getLesserBoundary().getZ(), region.getGreaterBoundary().getZ()
+				region.getLesserBoundary().getX(), region.getLesserBoundary().getZ(),
+				region.getGreaterBoundary().getX(), region.getGreaterBoundary().getZ()
 		));
-		return Claim.builder().world(WORLD).bounds(new Vector3i(region.getLesserBoundary().getX(), 0, region.getGreaterBoundary().getX()),
-				new Vector3i(region.getLesserBoundary().getZ(), 255, region.getGreaterBoundary().getZ()))
+		return Claim.builder().world(WORLD).bounds(new Vector3i(region.getLesserBoundary().getX(), 0, region.getLesserBoundary().getZ()),
+				new Vector3i(region.getGreaterBoundary().getX(), 255, region.getGreaterBoundary().getZ()))
 				.type(ClaimType.BASIC)
 				.requiresClaimBlocks(false)
 				.cause(Cause.source(PLUGIN).build())

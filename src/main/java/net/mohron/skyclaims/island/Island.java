@@ -46,7 +46,7 @@ public class Island {
 		save();
 	}
 
-	public Island(UUID owner,UUID claimId, UUID worldId, Region region, Vector3i spawnLocation) {
+	public Island(UUID owner, UUID claimId, UUID worldId, Region region, Vector3i spawnLocation) {
 		World world = PLUGIN.getGame().getServer().getWorld(worldId).orElseGet(WorldUtil::getDefaultWorld);
 
 		this.owner = owner;
@@ -57,9 +57,9 @@ public class Island {
 
 		if (this.claim == null) {
 			SkyClaims.getInstance().getLogger().error("Claim " + claimId + " not found. Force claiming the island.");
-			ClaimResult result = IslandUtil.forceCreateProtection(getUser().orElse(null).getName(), owner, region);
+			ClaimResult result = IslandUtil.forceCreateProtection(getOwnerName(), owner, region);
 			if (result.successful()) {
-				this.claim = result.getClaim().get();
+				this.claim = result.getClaim().orElse(null);
 			}
 		}
 	}
@@ -77,7 +77,7 @@ public class Island {
 	}
 
 	public String getOwnerName() {
-		return (getUser().isPresent()) ? getUser().get().getName() : "Unknown";
+		return getUser().map(User::getName).orElse("Unknown");
 	}
 
 	public Optional<User> getUser() {
