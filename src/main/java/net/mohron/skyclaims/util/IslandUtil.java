@@ -32,7 +32,7 @@ public class IslandUtil {
 			WorldUtil.setRegionBiome(region, ConfigUtil.getDefaultBiome().get());
 
 		ClaimResult claimResult = forceCreateProtection(owner.getName(), owner.getUniqueId(), region);
-		//CreateClaimResult claimResult = createProtection(owner, region);
+		//CreateClaimResult claimResult = prepareProtection(owner, region);
 		if (!claimResult.successful()) {
 			//noinspection OptionalGetWithoutIsPresent
 			PLUGIN.getLogger().error("Failed to create claim. Found overlapping claim: " + claimResult.getClaim().get().getUniqueId());
@@ -52,7 +52,7 @@ public class IslandUtil {
 	public static ClaimResult forceCreateProtection(String ownerName, UUID ownerUUID, Region region) {
 		ClaimResult claimResult = null;
 		while (claimResult == null || !claimResult.successful()) {
-			claimResult = createProtection(ownerName, ownerUUID, region);
+			claimResult = prepareProtection(ownerName, ownerUUID, region);
 			if (claimResult.getResultType().equals(ClaimResultType.OVERLAPPING_CLAIM)) {
 				PLUGIN.getLogger().error("Failed to create claim. Found overlapping claims. Removing them:");
 				for (Claim claim : claimResult.getClaims()) {
@@ -66,7 +66,11 @@ public class IslandUtil {
                     CLAIM_MANAGER.deleteClaim(claim, Cause.source(PLUGIN).build());
                 }
 			} else if (claimResult.getClaim().isPresent()) {
-				CLAIM_MANAGER.addClaim(claimResult.getClaim().get(), Cause.source(PLUGIN).build());
+				Claim claim = claimResult.getClaim().get();
+				claim.getData().setClaimExpiration(false);
+				claim.getData().setResizable(false);
+				claim.getData().setRequiresClaimBlocks(false);
+				CLAIM_MANAGER.addClaim(claim, Cause.source(PLUGIN).build());
 				PLUGIN.getLogger().info("Successfully created new claim " + claimResult.getClaim().get().getUniqueId() + ".");
 			}
 		}
@@ -112,9 +116,9 @@ public class IslandUtil {
 		});
 	}
 
-	private static ClaimResult createProtection(String ownerName, UUID ownerUUID, Region region) {
+	private static ClaimResult prepareProtection(String ownerName, UUID ownerUUID, Region region) {
 		PLUGIN.getLogger().info(String.format(
-				"Creating claim for %s (%s) with region %s,%s: (%s,%s),(%s,%s)",
+				"Preparing claim for %s (%s) with region %s,%s: (%s,%s),(%s,%s)",
 				ownerName,
 				ownerUUID,
 				region.getX(), region.getZ(),
