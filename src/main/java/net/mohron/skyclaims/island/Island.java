@@ -60,7 +60,13 @@ public class Island {
 			ClaimResult result = IslandUtil.forceCreateProtection(getOwnerName(), owner, region);
 			if (result.successful()) {
 				this.claim = result.getClaim().orElse(null);
-				save();
+				// delay save by one tick to avoid collision with loadData
+				PLUGIN.getGame().getScheduler().createTaskBuilder().delayTicks(1).execute(new Runnable() {
+					@Override
+					public void run() {
+						save();
+					}
+				}).submit(PLUGIN);
 			}
 		}
 	}
