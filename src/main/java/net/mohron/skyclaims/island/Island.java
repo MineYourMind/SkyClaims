@@ -60,6 +60,7 @@ public class Island {
 			ClaimResult result = IslandUtil.forceCreateProtection(getOwnerName(), owner, region);
 			if (result.successful()) {
 				this.claim = result.getClaim().orElse(null);
+				save();
 			}
 		}
 	}
